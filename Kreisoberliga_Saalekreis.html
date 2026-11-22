@@ -2,7 +2,16 @@
 <html lang="de" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1118">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fußball Live">
+
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <title>Kreisoberliga Saalekreis – Fußball-Live-Center</title>
 <style>
@@ -181,6 +190,25 @@ table.tbl{width:100%;border-collapse:collapse;font-size:.95rem}
 .widgetbox{min-height:120px;padding:.6rem}
 .widgetbox iframe{width:100%;border:0}
 .steps li{margin:.3rem 0}
+/* Handy */
+.mnav{display:none}
+@media (max-width:800px){
+  .topbar{padding:calc(.6rem + env(safe-area-inset-top)) .8rem .6rem}
+  .tools{flex-wrap:nowrap;overflow-x:auto;width:100%;padding-bottom:.2rem;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tools::-webkit-scrollbar{display:none}
+  .tools label{display:none}
+  .wrap{padding:.6rem .6rem calc(5rem + env(safe-area-inset-bottom))}
+  .mnav{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--card);
+    border-top:1px solid var(--line);padding:.35rem .3rem calc(.35rem + env(safe-area-inset-bottom));box-shadow:0 -4px 16px rgba(0,0,0,.3)}
+  .mnav a{display:flex;flex-direction:column;align-items:center;gap:.1rem;text-decoration:none;color:var(--muted);font-size:.7rem;padding:.2rem}
+  .mnav b{width:2rem;height:2rem;border-radius:9px;display:grid;place-items:center;background:var(--card2);border:1px solid var(--line);font-size:.95rem;color:var(--text)}
+  .mnav a.on{color:var(--accent)} .mnav a.on b{background:var(--accent);color:#04130a;border-color:var(--accent)}
+  .card-h{padding:.6rem .7rem} .card-b{padding:.4rem .3rem}
+  .hero{margin:.8rem 0}
+  .toast{bottom:calc(5.5rem + env(safe-area-inset-bottom))}
+}
+#btn-install.hidden{display:none}
+@media (max-width:800px){#clock{display:none}}
 footer.foot{margin-top:2rem;color:var(--muted);font-size:.8rem;text-align:center}
 :fullscreen body,body:fullscreen{overflow:auto}
 
@@ -260,7 +288,7 @@ const LEAGUES = {
 const DEFAULTS = {
   theme: 'dark', fontScale: 100, liveInterval: 60, idleInterval: 600, defaultLeague: 'start',
   mainFavorite: '', favorites: { bl1: [], bl2: [], kol: [] },
-  kolWidgetMatches: '', kolWidgetTable: '', kolSeasons: {}
+  kolWidgetMatches: '<script type="text/javascript" src="https://www.fussball.de/widgets.js"><\/script>\n<div class="fussballde_widget" data-id="485a4590-131f-432a-9ff7-0cd09cc7e6fc" data-type="competition" style="width: 100%"></div>', kolWidgetTable: '', kolSeasons: {}
 };
 function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { console.warn('Speichern nicht möglich', e); return false; } }
@@ -272,6 +300,7 @@ function loadSettings() {
   const out = Object.assign({}, DEFAULTS, s);
   out.favorites = Object.assign({ bl1: [], bl2: [], kol: [] }, s.favorites || {});
   out.kolSeasons = Object.assign({}, s.kolSeasons || {});
+  if (!out.kolWidgetMatches) out.kolWidgetMatches = DEFAULTS.kolWidgetMatches;
   return out;
 }
 let SETTINGS = loadSettings();
@@ -516,9 +545,28 @@ function openManual() {
   </ol>
   <p>Zeigt das Widget beim Öffnen per Doppelklick eine Meldung zur Domain oder bleibt es leer, starten Sie das Programm über <code>Start_mit_lokalem_Server.bat</code> (liegt bei). Damit läuft es unter <code>http://localhost:8765</code>, der Adresse, die Sie beim Widget angegeben haben. Das schwarze Fenster muss geöffnet bleiben, solange Sie das Programm nutzen.</p>
   <p class="muted">Wichtig: Der Browser speichert Einstellungen für „Doppelklick“ und „lokalen Server“ getrennt. Bleiben Sie bei einer Startart, oder übertragen Sie Ihre Einstellungen einmalig mit Datensicherung erstellen/laden.</p>
-  <h3>10. Tastatur</h3>
+  <h3>10. Als Handy-App nutzen</h3>
+  <p>Damit die App auf dem Handy läuft, muss der Ordner einmalig im Internet abgelegt werden (z. B. kostenlos bei GitHub Pages). Danach öffnen Sie die Adresse auf dem Handy und installieren sie: <b>Android/Chrome</b> → Menü ⋮ → „App installieren“. <b>iPhone/Safari</b> → „Teilen“ → „Zum Home-Bildschirm“. Die App startet dann mit eigenem Symbol im Vollbild, und unten gibt es eine Leiste zum Wechseln der Ligen. Einstellungen übertragen Sie per Datensicherung (JSON) vom PC aufs Handy.</p>
+  <h3>11. Tastatur</h3>
   <p><code>R</code> = jetzt aktualisieren · <code>F</code> = Vollbild · <code>Esc</code> = Dialog schließen</p>
   </div><div class="dlg-f"><button class="btn primary" data-close>Schließen</button></div></div>`);
+}
+
+/* ---------- Handy-App (PWA) ---------- */
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('Service Worker:', e)));
+}
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installPrompt = e; const b = document.getElementById('btn-install'); if (b) b.classList.remove('hidden'); });
+function installApp() {
+  if (installPrompt) { installPrompt.prompt(); installPrompt = null; return; }
+  alert(/iPhone|iPad/.test(navigator.userAgent) ? 'iPhone/iPad: In Safari unten auf „Teilen“ (Quadrat mit Pfeil) tippen und „Zum Home-Bildschirm“ wählen.' : 'Android: Im Chrome-Menü (⋮) „App installieren“ bzw. „Zum Startbildschirm hinzufügen“ wählen.');
+}
+function mobileNav(active) {
+  const items = [['start', 'Fussball_Live_Center.html?auswahl=1', '⚽', 'Start'], ['bl1', 'Bundesliga_1.html', '1', '1. Liga'], ['bl2', 'Bundesliga_2.html', '2', '2. Liga'], ['kol', 'Kreisoberliga_Saalekreis.html', 'K', 'Kreisoberl.']];
+  const n = document.createElement('nav'); n.className = 'mnav';
+  n.innerHTML = items.map(i => '<a href="' + i[1] + '"' + (i[0] === active ? ' class="on"' : '') + '><b>' + i[2] + '</b><span>' + i[3] + '</span></a>').join('');
+  document.body.appendChild(n);
 }
 
 /* ---------- Netzwerkstatus ---------- */
@@ -886,6 +934,7 @@ function buildKolLayout() {
 /* ---------- Start ---------- */
 function initLeague() {
   buildShell();
+  mobileNav(L.key);
   if (L.source === 'fussballde') buildKolLayout();
   watchOnline(() => refresh(true));
   bindKeys(refresh);

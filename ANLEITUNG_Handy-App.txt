@@ -1,0 +1,38 @@
+FUSSBALL-LIVE-CENTER ALS HANDY-APP - EINMALIGE EINRICHTUNG
+===========================================================
+
+Die App ist eine "Web-App" (PWA). Sie wird nicht aus dem App Store geladen,
+sondern einmal im Internet abgelegt und dann auf dem Handy installiert.
+Kosten: keine.
+
+SCHRITT 1 - Ordner im Internet ablegen (kostenlos, GitHub Pages)
+  1. Auf https://github.com ein kostenloses Konto anlegen.
+  2. Oben rechts "+" -> "New repository" -> Name z. B. "fussball"
+     -> "Public" -> "Create repository".
+  3. Auf "uploading an existing file" klicken und ALLE Dateien aus diesem
+     Ordner hineinziehen -> "Commit changes".
+  4. Im Repository: "Settings" -> "Pages" -> Branch "main" / "(root)" -> "Save".
+  5. Nach ca. 1-2 Minuten ist die App erreichbar unter:
+     https://IHR-BENUTZERNAME.github.io/fussball/Fussball_Live_Center.html
+
+SCHRITT 2 - Domain beim FUSSBALL.DE-Widget eintragen (falls verlangt)
+  Falls das Kreisoberliga-Widget auf dem Handy leer bleibt oder einen
+  Domain-Hinweis zeigt: auf fussball.de unter "Meine Widgets" beim Widget
+  die Adresse  IHR-BENUTZERNAME.github.io  eintragen.
+
+SCHRITT 3 - Auf dem Handy installieren
+  Android (Chrome):  Adresse oeffnen -> Menue (drei Punkte) -> "App installieren"
+                     (oder Schaltflaeche "Als App installieren" auf der Startseite)
+  iPhone (Safari):   Adresse oeffnen -> "Teilen" (Quadrat mit Pfeil)
+                     -> "Zum Home-Bildschirm"
+
+Danach startet die App mit eigenem Fussball-Symbol im Vollbild.
+Unten gibt es eine Leiste zum Wechseln zwischen Start, 1. Liga, 2. Liga
+und Kreisoberliga.
+
+UPDATES: Neue Versionen einfach erneut in das GitHub-Repository hochladen.
+Die App holt sich beim naechsten Start automatisch die neue Version.
+
+EINSTELLUNGEN VOM PC UEBERNEHMEN: Am PC Einstellungen -> "Datensicherung
+erstellen", Datei aufs Handy schicken, dort Einstellungen ->
+"Datensicherung laden".

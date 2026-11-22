@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>1. Bundesliga – Fußball-Live-Center</title>
+<style>
+:root{
+  --bg:#0b1118; --bg2:#111a24; --card:#152130; --card2:#1b2a3c; --line:#24364b;
+  --text:#e8eef5; --muted:#8fa3b8; --accent:#22c55e; --accent2:#38bdf8;
+  --live:#ef4444; --warn:#f59e0b; --gold:#facc15;
+  --z-lead:rgba(250,204,21,.16); --z-up:rgba(34,197,94,.14); --z-rel:rgba(245,158,11,.15);
+  --z-down:rgba(239,68,68,.15); --z-eu:rgba(56,189,248,.12);
+  --fav:rgba(168,85,247,.22); --favline:#a855f7;
+  --radius:14px; --shadow:0 6px 24px rgba(0,0,0,.35);
+}
+html[data-theme="light"]{
+  --bg:#eef2f6; --bg2:#e3e9f0; --card:#ffffff; --card2:#f4f7fa; --line:#d5dee8;
+  --text:#132030; --muted:#5b6d80; --accent:#15803d; --accent2:#0369a1;
+  --z-lead:rgba(234,179,8,.22); --z-up:rgba(22,163,74,.14); --z-rel:rgba(217,119,6,.16);
+  --z-down:rgba(220,38,38,.13); --z-eu:rgba(2,132,199,.12); --fav:rgba(147,51,234,.14);
+  --shadow:0 4px 16px rgba(20,40,60,.10);
+}
+*{box-sizing:border-box}
+html{font-size:16px}
+body{margin:0;background:radial-gradient(1200px 600px at 10% -10%,var(--bg2),var(--bg));color:var(--text);
+  font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;min-height:100vh;line-height:1.4}
+a{color:var(--accent2)}
+button,select,input,textarea{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1500px;margin:0 auto;padding:1rem 1.25rem 3rem}
+
+/* Kopfzeile */
+.topbar{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem 1rem;padding:.9rem 1.25rem;
+  background:linear-gradient(90deg,rgba(34,197,94,.10),transparent 60%),var(--card);border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:20;box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;gap:.75rem;margin-right:auto;min-width:0}
+.brand h1{font-size:1.35rem;margin:0;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand small{display:block;color:var(--muted);font-size:.8rem;font-weight:400}
+.badge-logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:1.05rem;
+  color:#fff;flex:0 0 auto;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+.lg-bl1{background:linear-gradient(135deg,#d20515,#7a0010)}
+.lg-bl2{background:linear-gradient(135deg,#1f6feb,#0b3b8a)}
+.lg-kol{background:linear-gradient(135deg,#16a34a,#0d5c2b)}
+.lg-app{background:linear-gradient(135deg,#22c55e,#0ea5e9)}
+.tools{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.btn{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:.5rem .85rem;cursor:pointer;
+  display:inline-flex;align-items:center;gap:.4rem;text-decoration:none;color:var(--text);font-size:.92rem;white-space:nowrap}
+.btn:hover{border-color:var(--accent);}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#04130a;font-weight:600}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.5;cursor:default}
+select.sel{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:.45rem .6rem}
+
+/* Statusleiste */
+.statusbar{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;margin:1rem 0;padding:.65rem 1rem;
+  border-radius:var(--radius);background:var(--card);border:1px solid var(--line);font-size:.92rem}
+.pill{display:inline-flex;align-items:center;gap:.4rem;padding:.2rem .65rem;border-radius:999px;font-weight:600;font-size:.82rem;
+  border:1px solid var(--line);background:var(--card2)}
+.pill.live{background:rgba(239,68,68,.15);border-color:var(--live);color:#fca5a5}
+html[data-theme="light"] .pill.live{color:#b91c1c}
+.pill.ok{background:rgba(34,197,94,.13);border-color:var(--accent)}
+.pill.off{background:rgba(245,158,11,.15);border-color:var(--warn)}
+.pill.snap{background:rgba(56,189,248,.12);border-color:var(--accent2)}
+.dot{width:.55rem;height:.55rem;border-radius:50%;background:currentColor;display:inline-block}
+.pill.live .dot{background:var(--live);animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(239,68,68,.7)}70%{box-shadow:0 0 0 8px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
+.muted{color:var(--muted)}
+.spacer{flex:1}
+.alert{margin:1rem 0;padding:.8rem 1rem;border-radius:var(--radius);border:1px solid var(--warn);background:rgba(245,158,11,.10)}
+.alert.err{border-color:var(--live);background:rgba(239,68,68,.10)}
+.alert.info{border-color:var(--accent2);background:rgba(56,189,248,.08)}
+.hidden{display:none!important}
+
+/* Raster */
+.grid{display:grid;gap:1rem;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card-h{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem 1rem;padding:.8rem 1rem;border-bottom:1px solid var(--line);background:var(--card2)}
+.card-h h2{margin:0;font-size:1.05rem;letter-spacing:.2px}
+.card-h .tag{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.card-b{padding:.6rem .8rem}
+.span2{grid-column:1/-1}
+
+/* Spiele */
+.daygroup{margin:.3rem 0 .6rem}
+.daylabel{font-size:.8rem;color:var(--muted);padding:.35rem .4rem;text-transform:uppercase;letter-spacing:.6px}
+.match{display:grid;grid-template-columns:4.2rem minmax(0,1fr) 5.6rem minmax(0,1fr) 6.8rem;align-items:center;gap:.5rem;
+  padding:.5rem .5rem;border-radius:10px;border:1px solid transparent}
+.match+.match{margin-top:.2rem}
+.match:hover{background:var(--card2)}
+.match.is-live{border-color:var(--live);background:rgba(239,68,68,.07)}
+.match.is-fav{box-shadow:inset 3px 0 0 var(--favline);background:var(--fav)}
+.m-time{font-size:.85rem;color:var(--muted)}
+.team{display:flex;align-items:center;gap:.5rem;min-width:0}
+.team.home{justify-content:flex-end;text-align:right}
+.team .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.team.fav .nm{font-weight:700;color:var(--favline)}
+.crest{width:26px;height:26px;object-fit:contain;flex:0 0 auto}
+.crest.ph{display:grid;place-items:center;border-radius:50%;background:var(--card2);border:1px solid var(--line);font-size:.65rem;color:var(--muted)}
+.score{text-align:center;font-weight:800;font-size:1.25rem;line-height:1.1}
+.score small{display:block;font-size:.72rem;font-weight:500;color:var(--muted)}
+.is-live .score{color:var(--live)}
+.st{font-size:.75rem;text-align:center;padding:.18rem .4rem;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.st-live{border-color:var(--live);color:var(--live);font-weight:700}
+.st-ht{border-color:var(--warn);color:var(--warn);font-weight:700}
+.st-done{color:var(--muted)}
+.st-plan{color:var(--accent2)}
+.st-post{border-color:var(--warn);color:var(--warn)}
+.st-open{border-color:var(--warn);color:var(--warn)}
+@media (max-width:640px){
+  .match{grid-template-columns:minmax(0,1fr) 4.6rem minmax(0,1fr);row-gap:.15rem}
+  .m-time,.m-st{grid-column:1/-1;text-align:center}
+  .m-time{order:-1}
+  .crest{width:20px;height:20px}
+}
+
+/* Tabelle */
+table.tbl{width:100%;border-collapse:collapse;font-size:.95rem}
+.tbl th{font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);text-align:right;padding:.45rem .4rem;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card)}
+.tbl td{padding:.42rem .4rem;text-align:right;border-bottom:1px solid var(--line)}
+.tbl th.l,.tbl td.l{text-align:left}
+.tbl td.pts{font-weight:800}
+.tbl tr.z-lead td{background:var(--z-lead)}
+.tbl tr.z-up td{background:var(--z-up)}
+.tbl tr.z-eu td{background:var(--z-eu)}
+.tbl tr.z-rel td{background:var(--z-rel)}
+.tbl tr.z-down td{background:var(--z-down)}
+.tbl tr.fav td{box-shadow:inset 0 2px 0 var(--favline),inset 0 -2px 0 var(--favline)}
+.tbl tr.fav td.l .nm{font-weight:700;color:var(--favline)}
+.tbl .tm{display:flex;align-items:center;gap:.5rem;min-width:0}
+.tbl .tm .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.star{background:none;border:none;cursor:pointer;font-size:1.05rem;color:var(--muted);padding:0 .15rem;line-height:1}
+.star.on{color:var(--gold)}
+.legend{display:flex;flex-wrap:wrap;gap:.4rem 1rem;padding:.6rem .8rem;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line)}
+.note{padding:.6rem .8rem;font-size:.8rem;color:var(--muted);border-top:1px solid var(--line)}
+.legend i{display:inline-block;width:.9rem;height:.9rem;border-radius:3px;vertical-align:-2px;margin-right:.3rem;border:1px solid var(--line)}
+@media (max-width:640px){ .tbl .hide-s{display:none} .tbl{font-size:.88rem} }
+.empty{padding:1.2rem;text-align:center;color:var(--muted)}
+
+/* Startseite */
+.hero{margin:1.5rem 0 1rem}
+.hero h2{font-size:1.6rem;margin:.2rem 0}
+.tiles{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.tile{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:1.3rem;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:1rem;transition:transform .15s,border-color .15s;overflow:hidden}
+.tile:hover{transform:translateY(-3px);border-color:var(--accent)}
+.tile::before{content:"";position:absolute;inset:0 0 auto 0;height:5px}
+.tile.t-bl1::before{background:#d20515}.tile.t-bl2::before{background:#1f6feb}.tile.t-kol::before{background:#16a34a}
+.tile-h{display:flex;gap:.9rem;align-items:center}
+.tile-h h3{margin:0;font-size:1.25rem}
+.tile-h .badge-logo{width:58px;height:58px;font-size:1.3rem;border-radius:15px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.fact{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:.6rem .75rem;min-width:0}
+.fact b{display:block;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fact span{font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.fact.wide{grid-column:1/-1}
+.tile .btn.primary{justify-content:center;padding:.7rem;font-size:1rem}
+
+/* Dialoge */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:3vh 1rem;overflow:auto}
+.dlg{background:var(--card);border:1px solid var(--line);border-radius:18px;max-width:760px;width:100%;box-shadow:var(--shadow)}
+.dlg-h{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.2rem;border-bottom:1px solid var(--line)}
+.dlg-h h2{margin:0;font-size:1.2rem}
+.dlg-b{padding:1rem 1.2rem;max-height:75vh;overflow:auto}
+.dlg-f{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end;padding:.9rem 1.2rem;border-top:1px solid var(--line)}
+.form{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:.75rem 1rem;align-items:center}
+.form label{color:var(--muted);font-size:.92rem}
+.form .full{grid-column:1/-1}
+.form select,.form input,.form textarea{background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:.5rem .6rem;width:100%}
+.form textarea{min-height:5.5rem;font-family:Consolas,monospace;font-size:.8rem}
+.form h3{grid-column:1/-1;margin:.8rem 0 0;font-size:1rem;border-bottom:1px solid var(--line);padding-bottom:.3rem}
+@media (max-width:800px){.topbar{position:static}}
+@media (max-width:640px){.form{grid-template-columns:1fr}}
+.manual h3{margin:1.2rem 0 .4rem;color:var(--accent)}
+.manual p,.manual li{color:var(--text)}
+.manual code{background:var(--card2);padding:.05rem .3rem;border-radius:4px}
+.toast{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--accent);
+  padding:.6rem 1rem;border-radius:10px;z-index:200;box-shadow:var(--shadow)}
+.widgetbox{min-height:120px;padding:.6rem}
+.widgetbox iframe{width:100%;border:0}
+.steps li{margin:.3rem 0}
+footer.foot{margin-top:2rem;color:var(--muted);font-size:.8rem;text-align:center}
+:fullscreen body,body:fullscreen{overflow:auto}
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div id="hdr-logo" class="badge-logo">·</div><h1 id="hdr-title">1. Bundesliga</h1></div>
+  <div class="tools">
+    <a class="btn" href="Fussball_Live_Center.html?auswahl=1">← Zurück zur Liga-Auswahl</a>
+    <label class="muted" for="sel-season">Saison</label><select class="sel" id="sel-season" aria-label="Saison"></select>
+    <label class="muted" for="sel-group">Spieltag</label><select class="sel" id="sel-group" aria-label="Spieltag"><option value="auto">Aktueller Spieltag (automatisch)</option></select>
+    <button class="btn primary" id="btn-refresh" title="Taste R">⟳ Jetzt aktualisieren</button>
+    <button class="btn" id="btn-full" title="Vollbild (Taste F)">⛶ Vollbild</button>
+    <button class="btn" id="btn-settings">⚙️ Einstellungen</button>
+    <button class="btn ghost" id="btn-help" title="Benutzerhandbuch">❓</button>
+  </div>
+</header>
+<main class="wrap">
+  <div class="alert err hidden" id="offline-alert">⚠️ <b>Keine Internetverbindung.</b> Es werden die zuletzt erfolgreich geladenen Daten angezeigt. Nach Wiederverbindung wird automatisch aktualisiert.</div>
+  <div class="statusbar"><span class="pill" id="st-pill">Lade Daten …</span><span id="st-info" class="muted"></span></div>
+  <div class="alert hidden" id="err-alert"></div>
+  <div class="grid" id="main-grid">
+    <section class="card"><div class="card-h"><h2 id="sec-a-title">A · Aktueller Spieltag</h2></div><div class="card-b" id="sec-a"><div class="empty">Lade …</div></div></section>
+    <section class="card" style="align-self:start"><div class="card-h"><h2 id="sec-b-title">B · Tabelle</h2></div><div id="sec-b"><div class="empty">Lade …</div></div></section>
+    <section class="card"><div class="card-h"><h2 id="sec-c-title">C · Letzter abgeschlossener Spieltag</h2></div><div class="card-b" id="sec-c"></div></section>
+    <section class="card"><div class="card-h"><h2 id="sec-d-title">D · Nächster Spieltag</h2></div><div class="card-b" id="sec-d"></div></section>
+  </div>
+  <footer class="foot">Daten: OpenLigaDB (openligadb.de) · Zeiten in deutscher Zeit (MEZ/MESZ)</footer>
+</main>
+<script>
+const PAGE = { league: 'bl1' };
+/* ==== Fußball-Live-Center – gemeinsamer Programmteil ==== */
+'use strict';
+const APP = { name: 'Fußball-Live-Center', version: '1.0', settingsKey: 'flc_settings_v1', cachePrefix: 'flc_cache_v1_' };
+const TZ = 'Europe/Berlin';
+const API = 'https://api.openligadb.de';
+
+const LEAGUES = {
+  bl1: { key: 'bl1', name: '1. Bundesliga', short: '1. BL', file: 'Bundesliga_1.html', logo: '1', logoClass: 'lg-bl1',
+    source: 'openligadb', shortcut: 'bl1', teams: 18, matchdays: 34,
+    zones: [ { from: 1, to: 1, cls: 'z-lead', label: 'Tabellenführer' },
+             { from: 2, to: 4, cls: 'z-up', label: 'Champions League' },
+             { from: 5, to: 6, cls: 'z-eu', label: 'Europapokal (abhängig vom DFB-Pokal)' },
+             { from: 16, to: 16, cls: 'z-rel', label: 'Relegation' },
+             { from: 17, to: 18, cls: 'z-down', label: 'Abstieg' } ] },
+  bl2: { key: 'bl2', name: '2. Bundesliga', short: '2. BL', file: 'Bundesliga_2.html', logo: '2', logoClass: 'lg-bl2',
+    source: 'openligadb', shortcut: 'bl2', teams: 18, matchdays: 34,
+    zones: [ { from: 1, to: 1, cls: 'z-lead', label: 'Tabellenführer / Aufstieg' },
+             { from: 2, to: 2, cls: 'z-up', label: 'Aufstieg' },
+             { from: 3, to: 3, cls: 'z-rel', label: 'Relegation (Aufstieg)' },
+             { from: 16, to: 16, cls: 'z-rel', label: 'Relegation (Abstieg)' },
+             { from: 17, to: 18, cls: 'z-down', label: 'Abstieg' } ] },
+  kol: { key: 'kol', name: 'Kreisoberliga Saalekreis', short: 'KOL', file: 'Kreisoberliga_Saalekreis.html', logo: 'KOL', logoClass: 'lg-kol',
+    source: 'fussballde', teams: 14, matchdays: 26,
+    zones: [ { from: 1, to: 1, cls: 'z-lead', label: 'Tabellenführer' } ],
+    zonesNote: 'Auf- und Abstiegsplätze werden nicht eingefärbt, weil die Regelung (u. a. abhängig von Absteigern aus höheren Ligen) nicht verlässlich bekannt ist.',
+    seasons: {
+      '2026': { label: '2026/2027', staffel: '031CHMB4JK000004VS5489BUVUR5FS5A-G', slug: 'kreisoberliga-kreis-saalekreis-kreisoberliga-herren-saison2627-sachsen-anhalt' }
+    },
+    /* Echte, am 22.11.2026 von FUSSBALL.DE übernommene Tabelle – nur als gekennzeichnete Momentaufnahme. */
+    snapshot: {
+      season: '2026', stand: '2026-11-22T18:15:00+01:00', matchday: 10, source: 'FUSSBALL.DE, Staffel-ID 640308',
+      table: [
+        ['SV Merseburg-Meuschau',10,9,0,1,37,10,27], ['SV Blau-Weiß 90 Wallwitz',10,6,1,3,30,18,19],
+        ['VSG Oppin',10,5,3,2,31,16,18], ['SV 1916 Beuna',10,5,3,2,27,15,18],
+        ['SV BW 1921 Farnstädt II',9,5,1,3,25,15,16], ['TSG Grün-Weiß Löbejün',10,5,1,4,21,18,16],
+        ['SV Merseburg 99',9,5,1,3,23,22,16], ['SG Spergau',10,5,0,5,25,27,15],
+        ['SG Döllnitz',8,4,2,2,17,18,14], ['SV Germania Kötzschau',10,3,4,3,18,19,13],
+        ['LSG 1967 Ostrau',10,2,1,7,17,25,7], ['SV Zöschen',10,2,1,7,20,33,7],
+        ['SG Dölbau 90 e.V.',10,2,0,8,10,40,6], ['SG Eisdorf',10,0,2,8,8,33,2]
+      ]
+    } }
+};
+
+/* ---------- Einstellungen ---------- */
+const DEFAULTS = {
+  theme: 'dark', fontScale: 100, liveInterval: 60, idleInterval: 600, defaultLeague: 'start',
+  mainFavorite: '', favorites: { bl1: [], bl2: [], kol: [] },
+  kolWidgetMatches: '', kolWidgetTable: '', kolSeasons: {}
+};
+function safeGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function safeSet(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { console.warn('Speichern nicht möglich', e); return false; } }
+function safeDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+function loadSettings() {
+  let s = {};
+  try { s = JSON.parse(safeGet(APP.settingsKey) || '{}') || {}; } catch (e) { s = {}; }
+  const out = Object.assign({}, DEFAULTS, s);
+  out.favorites = Object.assign({ bl1: [], bl2: [], kol: [] }, s.favorites || {});
+  out.kolSeasons = Object.assign({}, s.kolSeasons || {});
+  return out;
+}
+let SETTINGS = loadSettings();
+function saveSettings() { safeSet(APP.settingsKey, JSON.stringify(SETTINGS)); }
+
+function applyAppearance() {
+  document.documentElement.setAttribute('data-theme', SETTINGS.theme === 'light' ? 'light' : 'dark');
+  const sc = Math.min(150, Math.max(80, Number(SETTINGS.fontScale) || 100));
+  document.documentElement.style.fontSize = (16 * sc / 100) + 'px';
+}
+applyAppearance();
+
+/* Favoriten: Liste je Liga + Haupt-Favorit ("bl1|Vereinsname") */
+function isFav(league, team) {
+  if (!team) return false;
+  if ((SETTINGS.favorites[league] || []).includes(team)) return true;
+  return SETTINGS.mainFavorite === league + '|' + team;
+}
+function toggleFav(league, team) {
+  const list = SETTINGS.favorites[league] = SETTINGS.favorites[league] || [];
+  const i = list.indexOf(team);
+  if (i >= 0) list.splice(i, 1); else list.push(team);
+  if (i >= 0 && SETTINGS.mainFavorite === league + '|' + team) SETTINGS.mainFavorite = '';
+  saveSettings();
+}
+
+/* ---------- Zwischenspeicher für Offline-Anzeige ---------- */
+function cacheKey(league, season) { return APP.cachePrefix + league + '_' + season; }
+function readCache(league, season) { try { return JSON.parse(safeGet(cacheKey(league, season)) || 'null'); } catch (e) { return null; } }
+function writeCache(league, season, data) {
+  const ok = safeSet(cacheKey(league, season), JSON.stringify(Object.assign({ savedAt: new Date().toISOString() }, data)));
+  if (!ok) { // Speicher voll: ältere Saisons entfernen und erneut versuchen
+    try { Object.keys(localStorage).filter(k => k.startsWith(APP.cachePrefix) && !k.endsWith('_' + season)).forEach(safeDel); } catch (e) {}
+    safeSet(cacheKey(league, season), JSON.stringify(Object.assign({ savedAt: new Date().toISOString() }, data)));
+  }
+}
+
+/* ---------- Hilfsfunktionen ---------- */
+const $ = (sel, root) => (root || document).querySelector(sel);
+const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+const fmtDate = new Intl.DateTimeFormat('de-DE', { timeZone: TZ, weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+const fmtDayLong = new Intl.DateTimeFormat('de-DE', { timeZone: TZ, weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+const fmtTime = new Intl.DateTimeFormat('de-DE', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+const fmtStamp = new Intl.DateTimeFormat('de-DE', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+function dayKey(d) { return new Intl.DateTimeFormat('de-DE', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d); }
+function stamp(d) { return d ? fmtStamp.format(new Date(d)) + ' Uhr' : '–'; }
+function currentSeasonYear(now) { now = now || new Date(); const y = now.getFullYear(); return now.getMonth() >= 6 ? y : y - 1; }
+function seasonLabel(y) { y = Number(y); return y + '/' + (y + 1); }
+
+async function fetchJSON(url, timeoutMs) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs || 15000);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+    if (!r.ok) throw new Error('Server antwortet mit Status ' + r.status);
+    const txt = await r.text();
+    if (!txt) return null;
+    return JSON.parse(txt);
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Zeitüberschreitung – Datenquelle antwortet nicht.');
+    if (e instanceof TypeError) throw new Error(navigator.onLine === false ? 'Keine Internetverbindung.' : 'Datenquelle nicht erreichbar (Netzwerk- oder Sicherheitsfehler).');
+    throw e;
+  } finally { clearTimeout(t); }
+}
+
+function toast(msg, ms) {
+  const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
+  document.body.appendChild(el); setTimeout(() => el.remove(), ms || 2600);
+}
+function toggleFullscreen() {
+  const d = document;
+  if (!d.fullscreenElement) { (d.documentElement.requestFullscreen || function () {}).call(d.documentElement); }
+  else d.exitFullscreen();
+}
+function crestHTML(url, name) {
+  if (url) return '<img class="crest" loading="lazy" referrerpolicy="no-referrer" src="' + esc(url) + '" alt="" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'crest ph\',textContent:\'' + esc((name || '?').charAt(0)) + '\'}))">';
+  const w = String(name || '?').split(/[\s\-\/]+/).find(x => /^[A-Za-zÄÖÜäöüß]{3,}$/.test(x) && !/^(SV|SG|TSG|VSG|LSG|FC|TSV|BSV|SSV|VfB|VfL|FSV|Grün|Blau|Rot|Weiß|Schwarz|Germania|Eintracht|Borussia)$/i.test(x)) || String(name || '?');
+  return '<span class="crest ph">' + esc(w.charAt(0).toUpperCase()) + '</span>';
+}
+
+/* ---------- Dialoge ---------- */
+function openModal(html, onMount) {
+  const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = html;
+  m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) m.remove(); });
+  document.addEventListener('keydown', function k(e) { if (e.key === 'Escape') { m.remove(); document.removeEventListener('keydown', k); } });
+  document.body.appendChild(m); if (onMount) onMount(m); return m;
+}
+
+function teamOptions() {
+  // Für das Favoriten-Auswahlfeld: bekannte Vereine aus Zwischenspeicher bzw. Momentaufnahme
+  const out = [];
+  const y = currentSeasonYear();
+  ['bl1', 'bl2'].forEach(l => {
+    const c = readCache(l, y) || readCache(l, y - 1);
+    if (c && c.table) c.table.forEach(t => out.push([l, t.teamName]));
+  });
+  LEAGUES.kol.snapshot.table.forEach(r => out.push(['kol', r[0]]));
+  return out;
+}
+
+function openSettings(onSaved) {
+  const s = SETTINGS;
+  const opts = teamOptions();
+  const favSel = '<option value="">– kein Favoritenverein –</option>' + ['bl1', 'bl2', 'kol'].map(l => {
+    const list = opts.filter(o => o[0] === l);
+    if (!list.length) return '<optgroup label="' + LEAGUES[l].name + ' (Liga einmal öffnen, um Vereine zu laden)"></optgroup>';
+    return '<optgroup label="' + LEAGUES[l].name + '">' + list.map(o => { const v = l + '|' + o[1]; return '<option value="' + esc(v) + '"' + (s.mainFavorite === v ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') + '</optgroup>';
+  }).join('');
+  const iv = (v, list) => list.map(o => '<option value="' + o[0] + '"' + (Number(v) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('');
+  const html = `<div class="dlg" role="dialog" aria-label="Einstellungen">
+    <div class="dlg-h"><h2>⚙️ Einstellungen</h2><button class="btn ghost" data-close>✕</button></div>
+    <div class="dlg-b"><div class="form">
+      <h3>Aktualisierung</h3>
+      <label for="s-live">Intervall bei laufenden Spielen</label>
+      <select id="s-live">${iv(s.liveInterval, [[30, 'alle 30 Sekunden'], [60, 'alle 60 Sekunden (empfohlen)'], [120, 'alle 2 Minuten'], [300, 'alle 5 Minuten'], [0, 'aus (nur manuell)']])}</select>
+      <label for="s-idle">Intervall ohne laufende Spiele</label>
+      <select id="s-idle">${iv(s.idleInterval, [[300, 'alle 5 Minuten'], [600, 'alle 10 Minuten (empfohlen)'], [1800, 'alle 30 Minuten'], [3600, 'jede Stunde'], [0, 'aus (nur manuell)']])}</select>
+      <h3>Darstellung</h3>
+      <label for="s-def">Standardliga beim Programmstart</label>
+      <select id="s-def">
+        <option value="start"${s.defaultLeague === 'start' ? ' selected' : ''}>Liga-Auswahl (Startseite)</option>
+        ${Object.values(LEAGUES).map(l => '<option value="' + l.key + '"' + (s.defaultLeague === l.key ? ' selected' : '') + '>' + l.name + '</option>').join('')}
+      </select>
+      <label for="s-theme">Farbschema</label>
+      <select id="s-theme"><option value="dark"${s.theme !== 'light' ? ' selected' : ''}>Dunkel</option><option value="light"${s.theme === 'light' ? ' selected' : ''}>Hell</option></select>
+      <label for="s-font">Schriftgröße</label>
+      <select id="s-font">${iv(s.fontScale, [[90, 'Klein (90 %)'], [100, 'Normal (100 %)'], [115, 'Groß (115 %)'], [130, 'Sehr groß (130 %) – Fernseher'], [145, 'Extra groß (145 %)']])}</select>
+      <h3>Favoriten</h3>
+      <label for="s-fav">Favoritenverein</label>
+      <select id="s-fav">${favSel}</select>
+      <div class="full muted" style="font-size:.85rem">Weitere Favoriten markieren Sie direkt in jeder Tabelle mit dem Stern ☆. Aktuell markiert: ${['bl1', 'bl2', 'kol'].map(l => LEAGUES[l].short + ': ' + ((s.favorites[l] || []).length)).join(' · ')}</div>
+      <h3>Kreisoberliga Saalekreis – offizielle FUSSBALL.DE-Widgets</h3>
+      <div class="full muted" style="font-size:.85rem">Fügen Sie hier den vollständigen Einbettungscode ein, den FUSSBALL.DE im Widget-Center anzeigt (Anleitung im Benutzerhandbuch).</div>
+      <label for="s-kw1">Widget „Wettbewerb / Spiele“</label>
+      <textarea id="s-kw1" spellcheck="false" placeholder='&lt;div class="fussballde_widget" data-id="…" data-type="…"&gt;&lt;/div&gt; …'>${esc(s.kolWidgetMatches)}</textarea>
+      <label for="s-kw2">Widget „Tabelle“ (optional)</label>
+      <textarea id="s-kw2" spellcheck="false" placeholder="Einbettungscode des Tabellen-Widgets">${esc(s.kolWidgetTable)}</textarea>
+      <label for="s-kseason">Neue Saison ergänzen (Link zur Staffel auf FUSSBALL.DE)</label>
+      <input id="s-kseason" placeholder="https://www.fussball.de/spieltag/…/-/staffel/…" value="">
+      <h3>Datensicherung</h3>
+      <div class="full" style="display:flex;flex-wrap:wrap;gap:.5rem">
+        <button class="btn" id="b-export">💾 Datensicherung erstellen</button>
+        <button class="btn" id="b-import">📂 Datensicherung laden</button>
+        <input type="file" id="f-import" accept=".json,application/json" class="hidden">
+        <button class="btn" id="b-reset">↺ Auf Standard zurücksetzen</button>
+      </div>
+    </div></div>
+    <div class="dlg-f"><button class="btn" data-close>Abbrechen</button><button class="btn primary" id="b-save">Einstellungen speichern</button></div>
+  </div>`;
+  openModal(html, m => {
+    $('#b-save', m).onclick = () => {
+      s.liveInterval = Number($('#s-live', m).value); s.idleInterval = Number($('#s-idle', m).value);
+      s.defaultLeague = $('#s-def', m).value; s.theme = $('#s-theme', m).value; s.fontScale = Number($('#s-font', m).value);
+      s.mainFavorite = $('#s-fav', m).value;
+      s.kolWidgetMatches = $('#s-kw1', m).value.trim(); s.kolWidgetTable = $('#s-kw2', m).value.trim();
+      const link = $('#s-kseason', m).value.trim();
+      if (link) {
+        const p = parseStaffelLink(link);
+        if (!p) { alert('Der Link wurde nicht erkannt. Bitte den Link der Staffel-Seite von FUSSBALL.DE einfügen (er enthält „/staffel/…“ und „saison….“).'); return; }
+        s.kolSeasons[p.year] = { label: seasonLabel(p.year), staffel: p.staffel, slug: p.slug };
+      }
+      saveSettings(); applyAppearance(); m.remove(); toast('Einstellungen gespeichert'); if (onSaved) onSaved();
+    };
+    $('#b-export', m).onclick = exportBackup;
+    $('#b-import', m).onclick = () => $('#f-import', m).click();
+    $('#f-import', m).onchange = e => importBackup(e.target.files[0]);
+    $('#b-reset', m).onclick = () => { if (confirm('Alle Einstellungen und Favoriten auf Standard zurücksetzen?')) { safeDel(APP.settingsKey); location.reload(); } };
+  });
+}
+function parseStaffelLink(url) {
+  const st = /\/staffel\/([0-9A-Z]{20,40}-G)/i.exec(url);
+  const sl = /\/spieltag(?:plan)?\/([^/]*saison(\d{2})(\d{2})[^/]*)\//i.exec(url) || /\/([^/]*saison(\d{2})(\d{2})[^/]*)\//i.exec(url);
+  if (!st || !sl) return null;
+  return { staffel: st[1].toUpperCase().replace(/-G$/, '-G'), slug: sl[1], year: 2000 + Number(sl[2]) };
+}
+
+/* ---------- Datensicherung ---------- */
+function exportBackup() {
+  const data = { app: APP.name, format: 'flc-backup', version: 1, exportedAt: new Date().toISOString(), settings: SETTINGS };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  const d = new Intl.DateTimeFormat('sv-SE', { timeZone: TZ }).format(new Date());
+  a.href = URL.createObjectURL(blob); a.download = 'Fussball_Live_Center_Sicherung_' + d + '.json';
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast('Datensicherung wurde erstellt (Ordner „Downloads“).');
+}
+function importBackup(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (!d || d.format !== 'flc-backup' || typeof d.settings !== 'object') throw new Error('Keine gültige Sicherungsdatei des Fußball-Live-Centers.');
+      const s = Object.assign({}, DEFAULTS, d.settings);
+      s.favorites = Object.assign({ bl1: [], bl2: [], kol: [] }, d.settings.favorites || {});
+      ['bl1', 'bl2', 'kol'].forEach(l => { if (!Array.isArray(s.favorites[l])) s.favorites[l] = []; s.favorites[l] = s.favorites[l].filter(x => typeof x === 'string'); });
+      safeSet(APP.settingsKey, JSON.stringify(s));
+      alert('Datensicherung vom ' + stamp(d.exportedAt) + ' wurde geladen.'); location.reload();
+    } catch (e) { alert('Die Datei konnte nicht geladen werden: ' + e.message); }
+  };
+  r.readAsText(file, 'utf-8');
+}
+
+/* ---------- Benutzerhandbuch ---------- */
+function openManual() {
+  openModal(`<div class="dlg" style="max-width:900px"><div class="dlg-h"><h2>📖 Benutzerhandbuch</h2><button class="btn ghost" data-close>✕</button></div>
+  <div class="dlg-b manual">
+  <h3>1. Öffnen der HTML-Dateien</h3>
+  <p>Legen Sie die vier Dateien <code>Fussball_Live_Center.html</code>, <code>Bundesliga_1.html</code>, <code>Bundesliga_2.html</code> und <code>Kreisoberliga_Saalekreis.html</code> gemeinsam in <b>einen</b> Ordner. Starten Sie mit einem Doppelklick auf <code>Fussball_Live_Center.html</code>. Empfohlen sind aktuelle Versionen von Google Chrome oder Microsoft Edge. Eine Installation ist nicht nötig.</p>
+  <h3>2. Auswahl der Liga</h3>
+  <p>Die Startseite zeigt drei Kacheln mit Tabellenführer, Spieltag, Anzahl der Mannschaften und Aktualisierungszeit. „Liga öffnen“ führt zur jeweiligen Liga, „Zurück zur Liga-Auswahl“ wieder zur Startseite. Ist in den Einstellungen eine Standardliga gewählt, öffnet sich diese beim Programmstart automatisch.</p>
+  <p>Jede Ligaseite enthält: <b>A</b> aktueller Spieltag (bzw. ein im Auswahlfeld gewählter Spieltag), <b>B</b> vollständige Tabelle, <b>C</b> letzter abgeschlossener Spieltag, <b>D</b> nächster Spieltag. Über „Saison“ wechseln Sie die Spielzeit, über „Spieltag“ jeden einzelnen Spieltag.</p>
+  <h3>3. Automatische Aktualisierung</h3>
+  <ul>
+    <li>Beim Öffnen werden die neuesten Daten sofort aus dem Internet geladen.</li>
+    <li>Laufen Spiele (oder beginnt eines in den nächsten Minuten), wird im eingestellten Live-Intervall aktualisiert – standardmäßig alle 60 Sekunden. Sonst im ruhigeren Intervall (Standard: 10 Minuten).</li>
+    <li>„⟳ Jetzt aktualisieren“ lädt sofort neu. Die Statusleiste zeigt die letzte erfolgreiche Aktualisierung.</li>
+    <li><b>Kennzeichnung:</b> <span class="pill live"><span class="dot"></span>LIVE</span> = Spiele laufen, Daten werden laufend abgerufen. <span class="pill ok">Veröffentlichter Stand</span> = aktuell geladene, zuletzt veröffentlichte Ergebnisse, gerade kein Spiel. <span class="pill off">Offline</span> = gespeicherter Stand. <span class="pill snap">Momentaufnahme</span> = fester Stand mit Datum, wird nicht automatisch aktualisiert.</li>
+  </ul>
+  <h3>4. Internetverbindung</h3>
+  <p>Ohne Internet erscheint ein Hinweis, und die zuletzt erfolgreich geladenen Daten werden mit ihrem Datum angezeigt. Sobald die Verbindung zurück ist, aktualisiert das Programm selbst. Es werden niemals Ergebnisse erfunden: Fehlt eine Meldung, steht dort „–:–“.</p>
+  <h3>5. Einstellungen</h3>
+  <p>Über „⚙️ Einstellungen“ (auf jeder Seite): Aktualisierungsintervalle, Standardliga, Hell-/Dunkelmodus, Schriftgröße (bis „Extra groß“ für Fernseher), Favoritenverein, Widget-Codes der Kreisoberliga und neue Saisons. „Einstellungen speichern“ legt alles dauerhaft im Browser ab.</p>
+  <h3>6. Favoriten</h3>
+  <p>Klicken Sie in einer Tabelle auf den Stern ☆ neben einem Verein. Favoriten werden in Tabelle und Spielplan violett hervorgehoben. Einen Hauptfavoriten wählen Sie in den Einstellungen.</p>
+  <h3>7. Datensicherung</h3>
+  <p>Einstellungen → „Datensicherung erstellen“ speichert eine JSON-Datei (Ordner „Downloads“). Auf einem anderen Computer: Programm öffnen → Einstellungen → „Datensicherung laden“ → Datei wählen. Gesichert werden alle Einstellungen, Favoriten und Widget-Codes.</p>
+  <p class="muted">Hinweis: Chrome und Edge speichern die Einstellungen getrennt voneinander. Liegen die Dateien in einem anderen Ordner, bleiben die Einstellungen erhalten, solange Sie denselben Browser verwenden.</p>
+  <h3>8. Datenquellen und Einschränkungen</h3>
+  <ul>
+    <li><b>1. und 2. Bundesliga:</b> <a href="https://www.openligadb.de" target="_blank" rel="noopener">OpenLigaDB</a> – kostenlos, ohne Zugangsschlüssel, direkt aus dem Browser abrufbar. Die Daten werden von einer Gemeinschaft gepflegt. Live-Tore erscheinen meist nach wenigen Minuten, in Einzelfällen später. Einen offiziellen Status „Halbzeit“, „abgesagt“ oder „verschoben“ liefert OpenLigaDB nicht: „Halbzeit (ca.)“ wird aus der Anstoßzeit geschätzt, „verschoben“ aus einem deutlich abweichenden Termin abgeleitet, und ein Spiel ohne Ergebnismeldung nach Spielende erscheint als „Ergebnis ausstehend“.</li>
+    <li><b>Kreisoberliga Saalekreis:</b> Die Daten liegen ausschließlich bei FUSSBALL.DE (DFB). Es gibt keine freie Schnittstelle. Ergebnisse und Anstoßzeiten sind auf FUSSBALL.DE absichtlich verschlüsselt, und der Browser blockiert direkte Abrufe. Automatisches Auslesen wäre technisch unzuverlässig und verstößt gegen die Nutzungsbedingungen. Der zulässige Weg sind die <b>offiziellen FUSSBALL.DE-Widgets</b>, die die Daten selbst anzeigen und sich nach jeder Ergebnismeldung aktualisieren.</li>
+  </ul>
+  <h3>9. Kreisoberliga: Widgets einrichten (einmalig, ca. 5 Minuten)</h3>
+  <ol class="steps">
+    <li>Auf <a href="https://www.fussball.de" target="_blank" rel="noopener">www.fussball.de</a> kostenlos als Fan registrieren und anmelden.</li>
+    <li>Oben rechts über das Menü (…) → <b>Profil</b> → <b>Meine Widgets</b> (Widget-Center) → <b>Neues Widget erstellen</b>.</li>
+    <li>Widget-Typ <b>Wettbewerb</b> wählen, nach „Kreisoberliga Saalekreis“ (Herren, Saison 26/27) suchen und „Tabelle anzeigen“ aktivieren. Falls nach einer Webseiten-Adresse gefragt wird: <code>localhost</code> eintragen.</li>
+    <li>Beim Widget auf „Code anzeigen“ klicken und den <b>gesamten</b> Code kopieren.</li>
+    <li>Im Fußball-Live-Center: Einstellungen → Feld „Widget Wettbewerb / Spiele“ → Code einfügen → speichern. Optional ein zweites Widget nur mit der Tabelle anlegen.</li>
+  </ol>
+  <p>Zeigt das Widget beim Öffnen per Doppelklick eine Meldung zur Domain oder bleibt es leer, starten Sie das Programm über <code>Start_mit_lokalem_Server.bat</code> (liegt bei). Damit läuft es unter <code>http://localhost:8765</code>, der Adresse, die Sie beim Widget angegeben haben. Das schwarze Fenster muss geöffnet bleiben, solange Sie das Programm nutzen.</p>
+  <p class="muted">Wichtig: Der Browser speichert Einstellungen für „Doppelklick“ und „lokalen Server“ getrennt. Bleiben Sie bei einer Startart, oder übertragen Sie Ihre Einstellungen einmalig mit Datensicherung erstellen/laden.</p>
+  <h3>10. Tastatur</h3>
+  <p><code>R</code> = jetzt aktualisieren · <code>F</code> = Vollbild · <code>Esc</code> = Dialog schließen</p>
+  </div><div class="dlg-f"><button class="btn primary" data-close>Schließen</button></div></div>`);
+}
+
+/* ---------- Netzwerkstatus ---------- */
+function watchOnline(onBack) {
+  const upd = () => { const b = $('#offline-alert'); if (b) b.classList.toggle('hidden', navigator.onLine !== false); };
+  window.addEventListener('online', () => { upd(); toast('Internetverbindung wiederhergestellt'); if (onBack) onBack(); });
+  window.addEventListener('offline', () => { upd(); toast('Keine Internetverbindung – gespeicherte Daten werden angezeigt', 4000); });
+  upd();
+}
+function bindKeys(refresh) {
+  document.addEventListener('keydown', e => {
+    if (e.target.matches('input,textarea,select') || e.ctrlKey || e.metaKey || e.altKey || $('.modal')) return;
+    if (e.key === 'r' || e.key === 'R') { e.preventDefault(); refresh && refresh(true); }
+    if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFullscreen(); }
+  });
+}
+
+/* ==== Ligaseite ==== */
+const L = LEAGUES[PAGE.league];
+const state = { season: null, group: 'auto', table: null, matches: [], loadedAt: null, fromCache: false,
+  error: null, timer: null, live: false, busy: false, refreshCount: 0, empty: false };
+
+/* ---------- OpenLigaDB-Auswertung ---------- */
+function kickoff(m) {
+  let s = m.matchDateTimeUTC || m.matchDateTime;
+  if (s && !/[zZ]|[+-]\d\d:?\d\d$/.test(s)) s += m.matchDateTimeUTC ? 'Z' : '';
+  return new Date(s);
+}
+function groupsOf(matches) {
+  const map = new Map();
+  matches.forEach(m => {
+    const o = m.group ? m.group.groupOrderID : 0;
+    if (!map.has(o)) map.set(o, { order: o, name: (m.group && m.group.groupName) || (o + '. Spieltag'), matches: [] });
+    map.get(o).matches.push(m);
+  });
+  const arr = Array.from(map.values()).sort((a, b) => a.order - b.order);
+  arr.forEach(g => {
+    g.matches.sort((a, b) => kickoff(a) - kickoff(b) || a.matchID - b.matchID);
+    const ts = g.matches.map(m => +kickoff(m)).sort((a, b) => a - b);
+    g.median = ts[Math.floor(ts.length / 2)];
+  });
+  return arr;
+}
+const DAY = 864e5;
+function isPostponed(m, g) { return Math.abs(+kickoff(m) - g.median) > 4 * DAY; }
+function groupStarted(g, now) { return g.matches.some(m => !isPostponed(m, g) && +kickoff(m) <= now); }
+function groupDone(g) { return g.matches.every(m => m.matchIsFinished || (isPostponed(m, g) && +kickoff(m) > g.median)); }
+
+function analyse(matches, now) {
+  now = now || Date.now();
+  const gs = groupsOf(matches);
+  let lastDone = null;
+  gs.forEach(g => { if (groupDone(g) && g.matches.some(m => m.matchIsFinished)) lastDone = g; });
+  const after = gs.filter(g => !lastDone || g.order > lastDone.order);
+  const inProgress = after.find(g => groupStarted(g, now) && !groupDone(g));
+  const upcoming = after.find(g => !groupStarted(g, now));
+  let current;
+  if (inProgress) current = inProgress;
+  else if (upcoming && (!lastDone || Math.min(...upcoming.matches.map(m => +kickoff(m))) - now < 3 * DAY)) current = upcoming;
+  else current = lastDone || upcoming || gs[gs.length - 1] || null;
+  const next = current ? gs.find(g => g.order > current.order && !groupDone(g)) : upcoming;
+  return { groups: gs, lastDone, current, next };
+}
+
+function scoreOf(m) {
+  const res = (m.matchResults || []).slice().sort((a, b) => (a.resultOrderID || 0) - (b.resultOrderID || 0));
+  const fin = res.find(r => r.resultTypeID === 2);
+  const half = res.find(r => r.resultTypeID === 1);
+  const cands = [];
+  if (fin) cands.push([fin.pointsTeam1, fin.pointsTeam2]);
+  if (res.length) cands.push([res[res.length - 1].pointsTeam1, res[res.length - 1].pointsTeam2]);
+  (m.goals || []).forEach(g => { if (g.scoreTeam1 != null && g.scoreTeam2 != null) cands.push([g.scoreTeam1, g.scoreTeam2]); });
+  let cur = null;
+  if (m.matchIsFinished && fin) cur = [fin.pointsTeam1, fin.pointsTeam2];
+  else cands.forEach(c => { if (!cur || c[0] + c[1] > cur[0] + cur[1]) cur = c; });
+  return { cur, half: half ? [half.pointsTeam1, half.pointsTeam2] : null };
+}
+
+function statusOf(m, g, now) {
+  now = now || Date.now();
+  const k = +kickoff(m), el = (now - k) / 60000;
+  if (m.matchIsFinished) return { code: 'done', label: 'beendet', cls: 'st-done' };
+  if (g && isPostponed(m, g)) return { code: 'post', label: k > now ? 'verlegt' : 'verlegt – offen', cls: 'st-post' };
+  if (el < 0) return { code: 'plan', label: 'geplant', cls: 'st-plan' };
+  if (el <= 150) {
+    if (el >= 47 && el <= 62) return { code: 'ht', label: 'Halbzeit (ca.)', cls: 'st-ht', live: true };
+    const min = el < 47 ? Math.max(1, Math.floor(el)) : Math.min(90, Math.floor(el - 17));
+    return { code: 'live', label: el > 112 ? 'läuft – Schlussphase' : 'läuft · ca. ' + min + '.', cls: 'st-live', live: true };
+  }
+  return { code: 'open', label: 'Ergebnis ausstehend', cls: 'st-open' };
+}
+
+/* ---------- Darstellung ---------- */
+function matchHTML(m, g, opts) {
+  const now = Date.now(), st = statusOf(m, g, now), sc = scoreOf(m), k = kickoff(m);
+  const t1 = m.team1 || {}, t2 = m.team2 || {};
+  const f1 = isFav(L.key, t1.teamName), f2 = isFav(L.key, t2.teamName);
+  const showScore = sc.cur && (st.code === 'done' || st.live || st.code === 'open');
+  const score = showScore ? sc.cur[0] + '&thinsp;:&thinsp;' + sc.cur[1] : '<span class="muted">–&thinsp;:&thinsp;–</span>';
+  const half = sc.half && (st.code === 'done' || st.live) && st.code !== 'ht' ? '<small>(' + sc.half[0] + ':' + sc.half[1] + ')</small>' : (st.code === 'ht' && sc.half ? '<small>HZ</small>' : '');
+  const dateTxt = opts && opts.showDate ? fmtDate.format(k).replace(/\.\d{4}$/, '.') : '';
+  return '<div class="match' + (st.live ? ' is-live' : '') + (f1 || f2 ? ' is-fav' : '') + '">' +
+    '<div class="m-time num">' + (dateTxt ? esc(dateTxt) + '<br>' : '') + esc(fmtTime.format(k)) + '</div>' +
+    '<div class="team home' + (f1 ? ' fav' : '') + '" title="' + esc(t1.teamName) + '"><span class="nm">' + esc(t1.teamName || '?') + '</span>' + crestHTML(t1.teamIconUrl, t1.teamName) + '</div>' +
+    '<div class="score num">' + score + half + '</div>' +
+    '<div class="team' + (f2 ? ' fav' : '') + '" title="' + esc(t2.teamName) + '">' + crestHTML(t2.teamIconUrl, t2.teamName) + '<span class="nm">' + esc(t2.teamName || '?') + '</span></div>' +
+    '<div class="m-st"><span class="st ' + st.cls + '">' + esc(st.label) + (st.code === 'post' ? ' ' + esc(fmtDate.format(k).slice(0, -5)) : '') + '</span></div></div>';
+}
+function groupHTML(g) {
+  if (!g) return '<div class="empty">Keine Begegnungen vorhanden.</div>';
+  let out = '', last = '';
+  g.matches.forEach(m => {
+    const k = kickoff(m), dk = dayKey(k);
+    if (dk !== last) { if (last) out += '</div>'; out += '<div class="daygroup"><div class="daylabel">' + esc(fmtDayLong.format(k)) + '</div>'; last = dk; }
+    out += matchHTML(m, g);
+  });
+  return out + (last ? '</div>' : '');
+}
+function zoneOf(pos) { const z = L.zones.find(z => pos >= z.from && pos <= z.to); return z ? z.cls : ''; }
+function tableHTML(rows) {
+  if (!rows || !rows.length) return '<div class="empty">Für diese Saison liegt noch keine Tabelle vor.</div>';
+  let h = '<table class="tbl num"><thead><tr><th>Pl.</th><th class="l">Verein</th><th title="Spiele">Sp.</th><th title="Siege" class="hide-s">S</th><th title="Unentschieden" class="hide-s">U</th><th title="Niederlagen" class="hide-s">N</th><th>Tore</th><th title="Tordifferenz">Diff.</th><th title="Punkte">Pkt.</th></tr></thead><tbody>';
+  rows.forEach((r, i) => {
+    const pos = i + 1, fav = isFav(L.key, r.teamName);
+    h += '<tr class="' + zoneOf(pos) + (fav ? ' fav' : '') + '"><td>' + pos + '.</td><td class="l"><div class="tm">' +
+      '<button class="star' + (fav ? ' on' : '') + '" data-fav="' + esc(r.teamName) + '" title="' + (fav ? 'Favorit entfernen' : 'Als Favorit markieren') + '">' + (fav ? '★' : '☆') + '</button>' +
+      crestHTML(r.teamIconUrl, r.teamName) + '<span class="nm" title="' + esc(r.teamName) + '">' + esc(r.teamName) + '</span></div></td>' +
+      '<td>' + r.matches + '</td><td class="hide-s">' + r.won + '</td><td class="hide-s">' + r.draw + '</td><td class="hide-s">' + r.lost + '</td>' +
+      '<td>' + r.goals + ':' + r.opponentGoals + '</td><td>' + (r.goalDiff > 0 ? '+' : '') + r.goalDiff + '</td><td class="pts">' + r.points + '</td></tr>';
+  });
+  h += '</tbody></table><div class="legend">' + L.zones.map(z => '<span><i style="background:var(--' + z.cls.replace('z-', 'z-') + ')"></i>' + esc(z.label) + '</span>').join('') +
+    '<span><i style="background:var(--fav);border-color:var(--favline)"></i>Favorit</span></div>';
+  if (L.zonesNote) h += '<div class="legend">' + esc(L.zonesNote) + '</div>';
+  return h;
+}
+
+/* ---------- Grundgerüst ---------- */
+function seasonOptions() {
+  const cur = currentSeasonYear();
+  if (L.source === 'fussballde') {
+    const all = Object.assign({}, L.seasons, SETTINGS.kolSeasons);
+    return Object.keys(all).sort().reverse().map(y => [y, all[y].label || seasonLabel(y)]);
+  }
+  const out = [];
+  for (let y = cur + 1; y >= cur - 4; y--) out.push([String(y), seasonLabel(y) + (y === cur + 1 ? ' (sobald verfügbar)' : '')]);
+  return out;
+}
+function buildShell() {
+  document.title = L.name + ' – ' + APP.name;
+  $('#hdr-logo').className = 'badge-logo ' + L.logoClass; $('#hdr-logo').textContent = L.logo;
+  $('#hdr-title').innerHTML = esc(L.name) + '<small>' + esc(APP.name) + '</small>';
+  const ss = $('#sel-season');
+  ss.innerHTML = seasonOptions().map(o => '<option value="' + o[0] + '">' + esc(o[1]) + '</option>').join('');
+  const cur = String(currentSeasonYear());
+  state.season = seasonOptions().some(o => o[0] === cur) ? cur : seasonOptions()[0][0];
+  ss.value = state.season;
+  ss.onchange = () => { state.season = ss.value; state.group = 'auto'; state.table = null; state.matches = []; refresh(true); };
+  $('#sel-group').onchange = e => { state.group = e.target.value; render(); if (L.source === 'fussballde') kolGroupLink(); };
+  $('#btn-refresh').onclick = () => refresh(true);
+  $('#btn-full').onclick = toggleFullscreen;
+  $('#btn-settings').onclick = () => openSettings(() => { render(); if (L.source === 'fussballde') kolWidgets(true); schedule(); });
+  $('#btn-help').onclick = openManual;
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-fav]'); if (!b) return;
+    toggleFav(L.key, b.getAttribute('data-fav')); render();
+  });
+}
+function fillGroupSelect(groups) {
+  const sel = $('#sel-group'), keep = state.group;
+  const n = groups && groups.length ? groups.map(g => g.order) : Array.from({ length: L.matchdays }, (_, i) => i + 1);
+  sel.innerHTML = '<option value="auto">Aktueller Spieltag (automatisch)</option>' + n.map(o => '<option value="' + o + '">' + o + '. Spieltag</option>').join('');
+  sel.value = n.includes(Number(keep)) ? keep : 'auto'; state.group = sel.value;
+}
+function setStatus() {
+  const p = $('#st-pill'), info = $('#st-info');
+  if (L.source === 'fussballde') return;
+  if (state.fromCache) { p.className = 'pill off'; p.innerHTML = '<span class="dot"></span>Offline – gespeicherter Stand'; }
+  else if (state.live) { p.className = 'pill live'; p.innerHTML = '<span class="dot"></span>LIVE – Spiele laufen'; }
+  else if (state.loadedAt) { p.className = 'pill ok'; p.innerHTML = '<span class="dot"></span>Veröffentlichter Stand'; }
+  else { p.className = 'pill'; p.textContent = 'Lade Daten …'; }
+  const iv = state.live ? SETTINGS.liveInterval : SETTINGS.idleInterval;
+  info.innerHTML = 'Letzte erfolgreiche Aktualisierung: <b>' + esc(stamp(state.loadedAt)) + '</b>' +
+    ' · Quelle: OpenLigaDB · ' + (iv ? 'automatisch alle ' + (iv >= 60 ? (iv / 60) + ' Min.' : iv + ' Sek.') : 'automatische Aktualisierung aus');
+}
+
+/* ---------- Laden (Bundesliga) ---------- */
+async function loadOpenLiga(full) {
+  const sc = L.shortcut, y = state.season;
+  const a = state.matches.length ? analyse(state.matches) : null;
+  const partial = !full && a && a.current && state.live;
+  const [table, md] = await Promise.all([
+    fetchJSON(API + '/getbltable/' + sc + '/' + y),
+    fetchJSON(API + '/getmatchdata/' + sc + '/' + y + (partial ? '/' + a.current.order : ''), 25000)
+  ]);
+  let matches = Array.isArray(md) ? md : [];
+  if (partial) {
+    const ids = new Set(matches.map(m => m.matchID));
+    matches = state.matches.filter(m => !ids.has(m.matchID)).concat(matches);
+  }
+  state.table = Array.isArray(table) ? table : [];
+  state.matches = matches; state.loadedAt = new Date().toISOString(); state.fromCache = false; state.error = null;
+  state.empty = !state.matches.length && !state.table.length;
+  if (!state.empty) writeCache(L.key, y, { table: state.table, matches: state.matches, loadedAt: state.loadedAt });
+}
+
+async function refresh(full) {
+  if (state.busy) return; state.busy = true;
+  const btn = $('#btn-refresh'); btn.disabled = true; btn.textContent = '⟳ Lädt …';
+  try {
+    if (L.source === 'fussballde') { kolWidgets(true); state.loadedAt = new Date().toISOString(); }
+    else {
+      try {
+        await loadOpenLiga(full || state.refreshCount % 10 === 0);
+      } catch (e) {
+        state.error = e.message;
+        const c = readCache(L.key, state.season);
+        if (c && (!state.loadedAt || state.fromCache)) { state.table = c.table; state.matches = c.matches; state.loadedAt = c.loadedAt || c.savedAt; state.fromCache = true; }
+      }
+      state.refreshCount++;
+    }
+    render();
+  } finally { state.busy = false; btn.disabled = false; btn.textContent = '⟳ Jetzt aktualisieren'; schedule(); }
+}
+function schedule() {
+  clearTimeout(state.timer);
+  let iv = state.live ? SETTINGS.liveInterval : SETTINGS.idleInterval;
+  if (L.source === 'openligadb' && !state.live && state.matches.length) {
+    const soon = state.matches.some(m => !m.matchIsFinished && +kickoff(m) - Date.now() < 15 * 60000 && +kickoff(m) > Date.now());
+    if (soon && SETTINGS.liveInterval) iv = Math.min(iv || Infinity, SETTINGS.liveInterval);
+  }
+  if (state.error && !iv) iv = 0;
+  if (iv) state.timer = setTimeout(() => refresh(false), iv * 1000);
+  setStatus();
+}
+
+/* ---------- Rendern ---------- */
+function render() {
+  if (L.source === 'fussballde') return renderKol();
+  const a = analyse(state.matches || []);
+  const now = Date.now();
+  state.live = state.matches.some(m => { const g = a.groups.find(x => x.order === (m.group && m.group.groupOrderID)); return statusOf(m, g, now).live; });
+  if ($('#sel-group').options.length <= 1 || $('#sel-group').dataset.season !== state.season) { fillGroupSelect(a.groups); $('#sel-group').dataset.season = state.season; }
+  const err = $('#err-alert');
+  if (state.error) {
+    err.className = 'alert ' + (state.fromCache ? '' : 'err');
+    err.innerHTML = '<b>Aktualisierung fehlgeschlagen:</b> ' + esc(state.error) + (state.fromCache ? ' Angezeigt wird der gespeicherte Stand vom <b>' + esc(stamp(state.loadedAt)) + '</b>.' : (state.matches.length ? ' Die zuletzt geladenen Daten bleiben sichtbar.' : ' Es liegen noch keine gespeicherten Daten vor.')) + ' Neuer Versuch erfolgt automatisch.';
+  } else if (state.empty) {
+    err.className = 'alert info'; err.innerHTML = 'Für die Saison <b>' + esc(seasonLabel(state.season)) + '</b> liegen bei OpenLigaDB (noch) keine Daten vor.';
+  } else err.className = 'alert hidden';
+
+  const sel = state.group !== 'auto' ? a.groups.find(g => String(g.order) === String(state.group)) : null;
+  const A = sel || a.current;
+  const aState = A ? (A.matches.some(m => statusOf(m, A, now).live) ? 'live' : (groupDone(A) ? 'abgeschlossen' : (groupStarted(A, now) ? 'läuft' : 'angesetzt'))) : '';
+  const tagA = { live: '<span class="pill live"><span class="dot"></span>LIVE</span>', abgeschlossen: '<span class="pill">abgeschlossen</span>', 'läuft': '<span class="pill ok">teilweise gespielt</span>', angesetzt: '<span class="pill">angesetzt</span>' }[aState] || '';
+  $('#sec-a-title').innerHTML = 'A · ' + (sel ? 'Ausgewählter Spieltag' : 'Aktueller Spieltag') + (A ? ' – ' + esc(A.name) : '') + ' ' + tagA;
+  $('#sec-a').innerHTML = state.matches.length ? groupHTML(A) : '<div class="empty">' + (state.error ? 'Keine Daten verfügbar.' : 'Lade Spiele …') + '</div>';
+  $('#sec-b').innerHTML = state.table ? tableHTML(state.table) : '<div class="empty">Lade Tabelle …</div>';
+  $('#sec-b-title').innerHTML = 'B · Tabelle ' + esc(seasonLabel(state.season)) + (state.live ? ' <span class="pill live"><span class="dot"></span>mit laufenden Spielen</span>' : '');
+  $('#sec-c-title').innerHTML = 'C · Letzter abgeschlossener Spieltag' + (a.lastDone ? ' – ' + esc(a.lastDone.name) : '');
+  $('#sec-c').innerHTML = a.lastDone ? groupHTML(a.lastDone) : '<div class="empty">Noch kein Spieltag vollständig abgeschlossen.</div>';
+  $('#sec-d-title').innerHTML = 'D · Nächster Spieltag' + (a.next ? ' – ' + esc(a.next.name) : '');
+  $('#sec-d').innerHTML = a.next ? groupHTML(a.next) : '<div class="empty">Kein weiterer Spieltag angesetzt.</div>';
+  setStatus();
+}
+
+/* ---------- Kreisoberliga (FUSSBALL.DE) ---------- */
+function kolSeason() { return Object.assign({}, L.seasons, SETTINGS.kolSeasons)[state.season]; }
+function kolUrl(md) {
+  const s = kolSeason(); if (!s) return 'https://www.fussball.de';
+  return 'https://www.fussball.de/spieltag/' + s.slug + '/-/' + (md ? 'spieltag/' + md + '/' : '') + 'staffel/' + s.staffel;
+}
+function parseWidgetCode(code) {
+  if (!code) return null;
+  const items = [];
+  const re = /<div[^>]*class=["'][^"']*fussballde_widget[^"']*["'][^>]*>/gi; let m;
+  while ((m = re.exec(code))) {
+    const tag = m[0];
+    const id = (/data-id=["']([^"']+)["']/i.exec(tag) || [])[1];
+    const type = (/data-type=["']([^"']+)["']/i.exec(tag) || [])[1] || '';
+    if (id && /^[\w-]{8,80}$/.test(id) && /^[\w-]{0,40}$/.test(type)) items.push({ id, type });
+  }
+  if (!items.length) { // reine data-id ohne div (falls nur die ID eingefügt wurde)
+    const id = (/^\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s*$/i.exec(code) || [])[1];
+    if (id) items.push({ id, type: '' });
+  }
+  let src = (/<script[^>]*src=["'](https:\/\/[^"']*fussball\.de\/[^"']+)["']/i.exec(code) || [])[1];
+  if (!src || !/^https:\/\/([a-z0-9-]+\.)*fussball\.de\//i.test(src)) src = 'https://www.fussball.de/widgets.js';
+  return items.length ? { items, src } : { items: [], src, invalid: true };
+}
+let widgetScriptLoaded = 0;
+function kolWidgets(reload) {
+  const slots = [['#w-matches', SETTINGS.kolWidgetMatches], ['#w-table', SETTINGS.kolWidgetTable]];
+  let src = null, any = false;
+  slots.forEach(([sel, code]) => {
+    const box = $(sel); if (!box) return;
+    const p = parseWidgetCode(code);
+    if (!p) { box.innerHTML = sel === '#w-matches' ? '<div class="empty">Noch kein FUSSBALL.DE-Widget eingerichtet – siehe Einrichtung oben. Bis dahin führen die Schaltflächen unten direkt zu den offiziellen Spieltagsseiten.</div>' : ''; box.closest('.card').classList.toggle('hidden', sel === '#w-table'); return; }
+    box.closest('.card').classList.remove('hidden');
+    if (p.invalid) { box.innerHTML = '<div class="alert err">Der hinterlegte Widget-Code wurde nicht erkannt. Bitte in den Einstellungen den vollständigen Code aus dem FUSSBALL.DE-Widget-Center einfügen.</div>'; return; }
+    if (!reload && box.dataset.done) return;
+    box.innerHTML = p.items.map(i => '<div class="fussballde_widget" data-id="' + esc(i.id) + '" data-type="' + esc(i.type) + '"></div>').join('');
+    box.dataset.done = '1'; src = p.src; any = true;
+  });
+  $('#kol-setup').classList.toggle('hidden', !!SETTINGS.kolWidgetMatches);
+  if (any && src) {
+    $$('script[data-fbw]').forEach(s => s.remove());
+    const s = document.createElement('script'); s.src = src + (widgetScriptLoaded++ ? (src.includes('?') ? '&' : '?') + 't=' + Date.now() : '');
+    s.async = true; s.dataset.fbw = '1';
+    s.onerror = () => toast('FUSSBALL.DE-Widget konnte nicht geladen werden – Internetverbindung prüfen.', 4500);
+    document.head.appendChild(s);
+  }
+}
+function kolSnapshotTable() {
+  const sn = L.snapshot;
+  if (sn.season !== state.season) return '<div class="empty">Für diese Saison ist keine Momentaufnahme hinterlegt – bitte das Tabellen-Widget verwenden.</div>';
+  const rows = sn.table.map(r => ({ teamName: r[0], matches: r[1], won: r[2], draw: r[3], lost: r[4], goals: r[5], opponentGoals: r[6], goalDiff: r[5] - r[6], points: r[7] }));
+  return tableHTML(rows);
+}
+function kolGroupLink() {
+  const v = $('#sel-group').value;
+  $('#kol-md-link').innerHTML = v === 'auto'
+    ? '<a class="btn" target="_blank" rel="noopener" href="' + esc(kolUrl()) + '">↗ Aktueller Spieltag auf FUSSBALL.DE</a>'
+    : '<a class="btn primary" target="_blank" rel="noopener" href="' + esc(kolUrl(v)) + '">↗ ' + esc(v) + '. Spieltag auf FUSSBALL.DE öffnen</a>';
+}
+function renderKol() {
+  const sn = L.snapshot, isSnap = sn.season === state.season;
+  if ($('#sel-group').options.length <= 1) fillGroupSelect(null);
+  const p = $('#st-pill');
+  p.className = 'pill ' + (SETTINGS.kolWidgetMatches ? 'ok' : 'snap');
+  p.innerHTML = '<span class="dot"></span>' + (SETTINGS.kolWidgetMatches ? 'Offizielle FUSSBALL.DE-Widgets' : 'Momentaufnahme – Widgets noch nicht eingerichtet');
+  $('#st-info').innerHTML = 'Widgets zuletzt neu geladen: <b>' + esc(stamp(state.loadedAt)) + '</b> · Quelle: FUSSBALL.DE · Amateurfußball: Ergebnisse erscheinen, sobald die Vereine sie melden (kein garantierter Live-Ticker).';
+  $('#err-alert').className = 'alert hidden';
+  $('#snap-title').innerHTML = 'B · Tabelle – Momentaufnahme ' + (isSnap ? '<span class="pill snap">Stand ' + esc(stamp(sn.stand)) + ' · ' + sn.matchday + '. Spieltag</span>' : '');
+  $('#snap-body').innerHTML = kolSnapshotTable() + (isSnap ? '<div class="note">Echte Tabelle von FUSSBALL.DE (' + esc(sn.source) + '), am ' + esc(stamp(sn.stand)) + ' übernommen. Sie wird <b>nicht</b> automatisch aktualisiert. Den aktuellen Stand zeigen die offiziellen Widgets.</div>' : '');
+  $('#kol-teams').textContent = isSnap ? sn.table.length + ' Mannschaften: ' + sn.table.map(r => r[0]).slice().sort((a, b) => a.localeCompare(b, 'de')).join(' · ') : '';
+  kolGroupLink();
+  $('#kol-links').innerHTML = [
+    ['Spieltag / Tabelle auf FUSSBALL.DE', kolUrl()],
+    ['Letzter Spieltag (lt. Momentaufnahme)', isSnap ? kolUrl(sn.matchday) : null], ['Nächster Spieltag (lt. Momentaufnahme)', isSnap ? kolUrl(sn.matchday + 1) : null]
+  ].filter(x => x[1]).map(x => '<a class="btn" target="_blank" rel="noopener" href="' + esc(x[1]) + '">↗ ' + esc(x[0]) + '</a>').join(' ');
+}
+function buildKolLayout() {
+  $('#main-grid').innerHTML = `
+  <div class="card span2 hidden" id="kol-setup"><div class="card-h"><h2>Einrichtung: offizielle Live-Daten der Kreisoberliga</h2></div><div class="card-b">
+    <p>Die Kreisoberliga-Daten stellt nur FUSSBALL.DE bereit. Damit hier Ergebnisse, Spielpläne und Tabelle automatisch erscheinen, binden Sie einmalig das kostenlose, offizielle Widget ein:</p>
+    <ol class="steps">
+      <li>Auf <a href="https://www.fussball.de" target="_blank" rel="noopener">fussball.de</a> als Fan registrieren und anmelden.</li>
+      <li>Menü (…) → <b>Profil</b> → <b>Meine Widgets</b> → <b>Neues Widget erstellen</b> → Typ <b>Wettbewerb</b>.</li>
+      <li>„Kreisoberliga Saalekreis“ (Herren, Saison 26/27) suchen, <b>„Tabelle anzeigen“</b> aktivieren. Wird eine Webseiten-Adresse verlangt: <code>localhost</code>.</li>
+      <li>„Code anzeigen“ → gesamten Code kopieren → hier <b>⚙️ Einstellungen</b> → Feld „Widget Wettbewerb / Spiele“ → einfügen → speichern.</li>
+    </ol>
+    <button class="btn primary" onclick="openSettings(()=>{render();kolWidgets(true);})">⚙️ Widget-Code jetzt eintragen</button>
+    <span class="muted" style="margin-left:.5rem">Bis dahin sehen Sie unten die gekennzeichnete Momentaufnahme und Direktlinks.</span>
+  </div></div>
+  <div class="card"><div class="card-h"><h2>A · C · D – Spiele, Ergebnisse und Ansetzungen</h2><span class="tag">offizielles FUSSBALL.DE-Widget</span></div>
+    <div class="widgetbox" id="w-matches"><div class="empty">Noch kein Widget eingerichtet.</div></div>
+    <div class="legend" style="gap:.5rem" id="kol-links"></div>
+    <div class="legend"><span>Spieltag-Auswahl:</span><span id="kol-md-link"></span></div></div>
+  <div style="display:flex;flex-direction:column;gap:1rem;min-width:0">
+    <div class="card hidden"><div class="card-h"><h2>B · Tabelle</h2><span class="tag">offizielles FUSSBALL.DE-Widget</span></div><div class="widgetbox" id="w-table"></div></div>
+    <div class="card"><div class="card-h"><h2 id="snap-title">B · Tabelle – Momentaufnahme</h2></div><div id="snap-body"></div><div class="note" id="kol-teams"></div></div>
+  </div>`;
+}
+
+/* ---------- Start ---------- */
+function initLeague() {
+  buildShell();
+  if (L.source === 'fussballde') buildKolLayout();
+  watchOnline(() => refresh(true));
+  bindKeys(refresh);
+  if (L.source === 'openligadb') {
+    const c = readCache(L.key, state.season);
+    if (c) { state.table = c.table; state.matches = c.matches; state.loadedAt = c.loadedAt || c.savedAt; state.fromCache = true; render(); }
+  } else { render(); }
+  refresh(true);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && state.loadedAt && Date.now() - new Date(state.loadedAt) > 60000) refresh(false); });
+}
+document.addEventListener('DOMContentLoaded', initLeague);
+
+</script>
+</body>
+</html>
